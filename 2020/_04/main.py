@@ -106,6 +106,8 @@ def solve(test_method: typing.Callable[
                 if test_method(current_passport, REQUIRED_FIELDS):
                     valid_passports += 1
                 current_passport.clear()
+        if test_method(current_passport, REQUIRED_FIELDS):
+            valid_passports += 1
         return valid_passports
 
 
