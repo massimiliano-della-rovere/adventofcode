@@ -10,6 +10,9 @@ HERE = pathlib.Path(__file__).parent
 INPUT_FILE_NAME = "input.txt"
 
 
+Processor = typing.Callable[[typing.Iterable], int]
+
+
 def find_my_seat(values: typing.Iterable) -> int:
     all_seat_ids = list(range(0, 127 * 8 + 7 + 1))
     for value in values:
@@ -37,7 +40,7 @@ def translate_seat_code(seat_code: str) -> int:
     return seat_id
 
 
-def solve(processor: typing.Callable[[typing.Iterable], int]):
+def solve(processor: Processor):
     with open(HERE / INPUT_FILE_NAME) as f:
         return processor(
             translate_seat_code(line.strip())

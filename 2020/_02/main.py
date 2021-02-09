@@ -14,14 +14,17 @@ REGEXP = r"^(?P<a>\d+)-(?P<b>\d+) (?P<letter>\w): (?P<password>.*)$"
 PARSER = re.compile(REGEXP).search
 
 
-def test_1(data):
+Test = typing.Callable[[dict], bool]
+
+
+def test_1(data) -> bool:
     min_occurrencies = int(data["a"])
     max_occurrencies = int(data["b"])
     occurrencies = data["password"].count(data["letter"])
     return min_occurrencies <= occurrencies <= max_occurrencies
 
 
-def test_2(data):
+def test_2(data) -> bool:
     position_1 = int(data["a"]) - 1
     position_2 = int(data["b"]) - 1
     password = data["password"]
@@ -31,7 +34,7 @@ def test_2(data):
     return (letter_1 == letter) ^ (letter_2 == letter)
 
 
-def solve(tester: typing.Callable[[dict], bool]) -> int:
+def solve(tester: Test) -> int:
     count = 0
     with open(HERE / INPUT_FILE_NAME) as f:
         for line in f:
