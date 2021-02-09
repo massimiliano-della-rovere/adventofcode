@@ -1,4 +1,4 @@
-"""7th day of advent of code 2020."""
+"""8th day of advent of code 2020."""
 
 
 import enum
