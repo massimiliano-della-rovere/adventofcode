@@ -2,7 +2,6 @@
 
 
 import pathlib
-import typing
 
 
 HERE = pathlib.Path(__file__).parent
