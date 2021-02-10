@@ -155,7 +155,7 @@ class SeatMap:
                 current_status = new_status
 
 
-def solve1():
+def solve1() -> int:
     return SeatMap(
         _2d_map_model=get_2d_seat_map(),
         use_high_tolerance=False,
