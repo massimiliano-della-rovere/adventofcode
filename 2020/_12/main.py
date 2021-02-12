@@ -81,6 +81,7 @@ Instructions = typing.Sequence[Instruction]
 
 def get_instructions() -> typing.Generator[Instruction, None, None]:
     with open(HERE / INPUT_FILE_NAME) as f:
+        # for line in ("F10", "N3", "F7", "R90", "F11"):  # result 286 for part2
         for line in f:
             yield Instruction(line[0], int(line[1:].strip()))
 
@@ -126,6 +127,7 @@ class Ship(metaclass=abc.ABCMeta):
         return matrix * self._heading_vector
 
     def run(self, instructions: typing.Iterator[Instruction]):
+        print(f"{self._ship_position=} {self._heading_vector=}")
         for self._current_instruction in instructions:
             try:
                 action = self._action_mapper[self._current_instruction.what]
@@ -133,6 +135,8 @@ class Ship(metaclass=abc.ABCMeta):
                 raise RuntimeError("Should not get here")
             else:
                 action()
+            print(f"\n{self._current_instruction=}")
+            print(f"{self._ship_position=} {self._heading_vector=}")
 
 
 class SimpleShip(Ship):
@@ -168,7 +172,6 @@ def main():
         ship = ship_class(heading_vector=heading)
         ship.run(get_instructions())
         print(ship.manhattan_distance())
-        print("58605 is wrong")
 
 
 if __name__ == "__main__":
