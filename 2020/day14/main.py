@@ -15,52 +15,72 @@ MASK_EXTRACTOR = re.compile(r"^mask = ([01X]+)$").search
 MEMORY_EXTRACTOR = re.compile(r"^mem\[(\d+)] = (\d+)$").search
 
 
+class Mask:
+    def __init__(self, mask: str):
+        self._mask_len = len(mask)
+        self._mask_set = 0
+        self._mask_del = 2 ** self._mask_len - 1
+        self._set(mask)
+
+    def _set(self, mask: str) -> None:
+        for index, bit in enumerate(reversed(mask)):
+            if bit == "0":
+                self._mask_del &= ~(1 << index)
+            elif bit == "1":
+                self._mask_set |= 1 << index
+            elif bit != "X":
+                raise ValueError(bit)
+
+    def __call__(self, value: int) -> int:
+        return value & self._mask_del | self._mask_set
+
+
 def get_values() -> typing.Generator[tuple[int, int], None, None]:
-    mask_set = 0
-    mask_del = 2 ** 36 - 1
+    mask = None
     with open(HERE / INPUT_FILE_NAME) as f:
         for line in f:
             if line.startswith("mask"):
-                mask_set = 0
-                mask_del = 2 ** 36 - 1
-                raw_mask = MASK_EXTRACTOR(line.strip()).group(0)
-                for index, bit in enumerate(reversed(raw_mask)):
-                    if bit == "0":
-                        mask_del &= ~(1 << index)
-                    elif bit == "1":
-                        mask_set |= 1 << index
+                mask = Mask(MASK_EXTRACTOR(line.strip()).group(1))
             else:
                 address, value = MEMORY_EXTRACTOR(line.strip()).groups()
-                yield int(address), int(value) & mask_del | mask_set
+                yield int(address), mask(int(value))
+
+
+class FloatingMask(Mask):
+    def __init__(self, mask: str):
+        self._floating_bits: list[int] = []
+        super().__init__(mask)
+
+    def _set(self, mask: str) -> None:
+        for index, bit in enumerate(reversed(mask)):
+            if bit == "X":
+                self._mask_del &= ~(1 << index)
+                self._floating_bits.append(index)
+            elif bit == "1":
+                self._mask_set |= 1 << index
+            elif bit != "0":
+                raise ValueError(bit)
+
+    def __call__(self, value: int) -> typing.Sequence[int]:
+        value = value & self._mask_del | self._mask_set
+        for bit_set in itertools.product((0, 1),
+                                         repeat=len(self._floating_bits)):
+            copy = value
+            for bit, shifts in zip(bit_set, self._floating_bits):
+                copy |= bit << shifts
+            yield copy
 
 
 def get_addresses() -> typing.Generator[tuple[int, int], None, None]:
-    mask_set = 0
-    mask_del = 2 ** 36 - 1
-    floating_bits: list[int] = []
+    mask = None
     with open(HERE / INPUT_FILE_NAME) as f:
         for line in f:
             if line.startswith("mask"):
-                mask_set = 0
-                mask_del = 2 ** 36 - 1
-                floating_bits: list[int] = []
-                raw_mask = MASK_EXTRACTOR(line.strip()).group(0)
-                for index, bit in enumerate(reversed(raw_mask)):
-                    if bit == "X":
-                        mask_del &= ~(1 << index)
-                        floating_bits.append(index)
-                    elif bit == "1":
-                        mask_set |= 1 << index
+                mask = FloatingMask(MASK_EXTRACTOR(line.strip()).group(1))
             elif line.startswith("mem"):
                 raw_address, value = MEMORY_EXTRACTOR(line.strip()).groups()
-                base_address = int(raw_address) & mask_del | mask_set
-                value = int(value)
-                for bit_set in itertools.product((0, 1),
-                                                 repeat=len(floating_bits)):
-                    address = base_address
-                    for bit, shifts in zip(bit_set, floating_bits):
-                        address |= bit << shifts
-                    yield address, value
+                for address in mask(int(raw_address)):
+                    yield address, int(value)
             else:
                 raise RuntimeError("Should not get here")
 
