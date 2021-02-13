@@ -1,9 +1,8 @@
-"""14th day of advent of code 2020."""
+"""15th day of advent of code 2020."""
 
 
 import collections
 import itertools
-import operator
 import pathlib
 import re
 import typing
