@@ -24,12 +24,23 @@ CM2D = typing.TypeVar("CM2D", bound="Matrix2D")
 @dataclasses.dataclass(init=False, frozen=True)
 class ComplexMatrix2D:
     def __init__(self, v1: complex, v2: complex):
+        # float sanification
+        v1 = complex(round(v1.real, 12), round(v1.imag, 12))
+        v2 = complex(round(v2.real, 12), round(v2.imag, 12))
         object.__setattr__(self, "_values", (v1, v2))
 
     @classmethod
     def from_iterable(cls: typing.Type[CM2D],
                       iterable: typing.Iterable[complex]) -> CM2D:
         return cls(*tuple(iterable))
+
+    def __repr__(self) -> str:
+        v1, v2 = getattr(self, "_values")
+        return f"{type(self).__name__}({v1}, {v2})"
+
+    def __str__(self) -> str:
+        v1, v2 = getattr(self, "_values")
+        return f"<{v1}, {v2}>"
 
     def __iter__(self):
         return iter(getattr(self, "_values"))
@@ -111,8 +122,7 @@ class Ship(metaclass=abc.ABCMeta):
         self._heading_vector = self._initial_heading_vector
 
     def manhattan_distance(self):
-        return int(
-            abs(self._ship_position.real) + abs(self._ship_position.imag))
+        return abs(self._ship_position.real) + abs(self._ship_position.imag)
 
     def _move(self) -> complex:
         vector = DIRECTION_MAPPER[self._current_instruction.what]
@@ -127,7 +137,6 @@ class Ship(metaclass=abc.ABCMeta):
         return matrix * self._heading_vector
 
     def run(self, instructions: typing.Iterator[Instruction]):
-        print(f"{self._ship_position=} {self._heading_vector=}")
         for self._current_instruction in instructions:
             try:
                 action = self._action_mapper[self._current_instruction.what]
@@ -135,8 +144,6 @@ class Ship(metaclass=abc.ABCMeta):
                 raise RuntimeError("Should not get here")
             else:
                 action()
-            print(f"\n{self._current_instruction=}")
-            print(f"{self._ship_position=} {self._heading_vector=}")
 
 
 class SimpleShip(Ship):
@@ -171,7 +178,7 @@ def main():
     ):
         ship = ship_class(heading_vector=heading)
         ship.run(get_instructions())
-        print(ship.manhattan_distance())
+        print(int(ship.manhattan_distance()))
 
 
 if __name__ == "__main__":
